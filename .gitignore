@@ -1,0 +1,26 @@
+# MACOS Specific
+*dSYM/
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Clangd file
+.clangd
+
+# log
+*.log
+log/
+
+# executables
+*.exe
+*.out
+
+# vscode
+.vscode/
+
+# working file
+work/*.cpp
+work/*.txt
