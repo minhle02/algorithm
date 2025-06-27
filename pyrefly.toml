@@ -12,7 +12,7 @@ site-package-path = []
 ###### configuring your python environment
 
 # assume we're running on linux, regardless of the actual current platform
-python-platform = "linux"
+python-platform = "macos"
 # assume the Python version we're using is 3.13, without querying an interpreter
 python-version = "3.13"
 # query the default Python interpreter on your system, if installed and `python_platform`,
@@ -23,7 +23,7 @@ python-version = "3.13"
 
 replace-imports-with-any = []
 ignore-errors-in-generated-code = false
-use-untyped-imports = false
+use-untyped-imports = true
 ignore-missing-source = false
 
 [errors]

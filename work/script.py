@@ -37,7 +37,7 @@ def parse_args():
                                 help=f'The brute force file to check (default: {Constant.DEFAULT_BRUTE_FILE})')
 
     run_parser = subparsers.add_parser(Command.RUN, help='Run a c++ program.')
-    run_parser.add_argument("file", nargs="*", default="main.cpp", type=str, help="The main C++ file to run.")
+    run_parser.add_argument("file", nargs="?", default="main.cpp", type=str, help="The main C++ file to run.")
     run_parser.add_argument("--debug", dest="debug", action="store_true", help="Enable debug mode by compiling with __DEBUG__ macro")
     run_parser.add_argument("--no-fileio", dest="no_fileio", action="store_true", help="Disable input/output from file, use stdin/stdout instead")
 

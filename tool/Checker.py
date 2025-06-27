@@ -1,13 +1,22 @@
+from builtins import isinstance
+from ast import Return
 import random
 import asyncio
 import os
 import sys
 
 from .Logger import Logger
+from .Compile import Compile
+from .Run import Run, RunResult
+from .DataModel import CodeFile
+from .ExecCommand import ExecResult
+from tabulate import tabulate
 
 class CheckerBase:
     def __init__(self):
         self._logger = Logger.get_logger()
+        self._compile_handler = Compile()
+        self._run_handler = Run()
 
     def gen_input(self) -> str:
         raise NotImplementedError("This function must be implemented")
@@ -16,44 +25,6 @@ class CheckerBase:
     def run_count(self) -> int:
         return 20
 
-    def __get_executable_name(self, file : str) -> str:
-        file = os.path.basename(file)
-        return file.removesuffix(".cpp") + ".exe"
-
-    def __get_compile_command(self, file : str) -> tuple[str, list[str]]:
-        cmd = ["g++", file]
-        if sys.platform == "darwin":
-            cmd.append(f"-I{os.path.join(os.path.dirname(__file__), os.pardir, "include")}")
-        output = self.__get_executable_name(file)
-        cmd.append("-o")
-        cmd.append(output)
-        cmd.append("-std=gnu++17")
-        return output, cmd
-
-
-    async def compile_file(self, file_path : str):
-        output_file, cmd  = self.__get_compile_command(file_path)
-        self._logger.debug(f"Compiling with command: {cmd}")
-        proc = await asyncio.subprocess.create_subprocess_exec(
-            *cmd,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        await proc.wait()
-        return output_file
-
-    async def run_file(self, data : str, file_path : str):
-        self._logger.debug(f"Running file {file_path}")
-        cmd = f"./{file_path}"
-        proc = await asyncio.create_subprocess_exec(
-            cmd,
-            stdin=asyncio.subprocess.PIPE,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await proc.communicate(data.encode("ascii"))
-        return stdout.decode("ascii")
 
     def check_output(self, output1 : str, output2 : str) -> bool:
         lines1 = output1.strip().splitlines()
@@ -67,46 +38,78 @@ class CheckerBase:
                 return False
         return True
 
-    async def check(self, file1 : str, file2 : str):
-        assert os.path.exists(file1), f"File {file1} does not exist"
-        assert os.path.exists(file2), f"File {file2} does not exist"
-        is_error = False
-        self._logger.info("Compiling...")
+    async def compile_file(self, *files : CodeFile) -> bool:
+        tasks : list[asyncio.Task] = []
         async with asyncio.TaskGroup() as tg:
-            task1 = tg.create_task(
-                self.compile_file(file1))
-            task2 = tg.create_task(
-                self.compile_file(file2))
-        file1 = task1.result()
-        file2 = task2.result()
-        self._logger.info("Running...")
+            for file in files:
+                task = tg.create_task(self._compile_handler.async_compile(file))
+                tasks.append(task)
+        for task in tasks:
+            if not task.result():
+                return False
+        return True
+    
+    async def run_files(self, data : str, *files : CodeFile) -> list[RunResult]:
+        tasks : list[asyncio.Task] = []
+
+        async with asyncio.TaskGroup() as tg:
+            for file in files:
+                task = tg.create_task(self._run_handler.async_run(file, data))
+                tasks.append(task)
+        return [task.result() for task in tasks]
+    
+    def __clean_output(self, output : list[str]) -> list[str]:
+        res : list[str] = []
+        for o in output:
+            lines = [line for line in o.splitlines() if line]
+            res.append("\n".join(lines))
+        return res
+
+    def check_output(self, output : list[str]):
+        return all(el == output[0] for el in output) if len(output) > 0 else True
+    
+    def __print_error_output(self, output : list[str], data : str, *files : CodeFile):
+        self._logger.error(f"ERROR!!! Check fail output")
+        self._logger.error(f"Data:\n{data}")
+        self._logger.error("")
+        outputs = [o.splitlines() for o in output]
+        headers = [file.file_name for file in files] 
+        outputs = [list(row) for row in zip(*outputs)]
+        self._logger.debug(f"Result: \n {tabulate(tabular_data=outputs, headers=headers)}")
+        self._logger.debug("")
+
+    async def check(self, *files : CodeFile):
+        self._logger.info(f"Checking...")
+        self._logger.info("")
         for i in range(self.run_count):
-            self._logger.debug(f"")
-            self._logger.debug("="*40)
-            self._logger.debug(f"Attempt {i}")
-            data : str = self.gen_input()
-            self._logger.debug(f"Data:\n{data}")
-            async with asyncio.TaskGroup() as tg:
-                task1 : asyncio.Task = tg.create_task(
-                self.run_file(data, file1))
-
-                task2 : asyncio.Task = tg.create_task(
-                self.run_file(data, file2))
-
-            out1 = task1.result()
-            out2 = task2.result()
-            if not self.check_output(out1, out2):
-                self._logger.error("Error!!!")
-                self._logger.error(f"Data:\n {data}")
-                is_error = True
+            self._logger.debug("")
+            self._logger.debug("="*20)
+            self._logger.debug(f"Attempt {i + 1}:")
+            data = self.gen_input()
+            results = await self.run_files(data, *files)
+            output : list[str]= []
+            for result in results:
+                code_file = result.code_file
+                if not result.success:
+                    self._logger.error(f"Fail to run file {code_file.file_name}")
+                    break
+                if isinstance(result.stdout, str):
+                    output.append(result.stdout)
             else:
-                self._logger.debug("Running ok")
+                clean_output = self.__clean_output(output)
+                if not self.check_output(clean_output):
+                    self.__print_error_output(clean_output, data, *files)
+                else:
+                    self._logger.info(f"Success")
+            
 
-        self._logger.debug("="*40)
-        if not is_error:
-            self._logger.info("SUCCESS")
-        os.remove(file1)
-        os.remove(file2)
-
-    def run(self, file1 : str, file2 : str):
-        asyncio.run(self.check(file1, file2))
+    def run(self, file1 : str, file2 : str) -> None:
+        files = [CodeFile(file1), CodeFile(file2)]
+        if not asyncio.run(self.compile_file(*files)):
+            self._logger.error(f"Fail to compile file. please check")
+            return 
+    
+        asyncio.run(self.check(*files))
+        for file in files:
+            if file.executable_name:
+                os.remove(file.executable_name)

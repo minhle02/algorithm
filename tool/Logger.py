@@ -32,6 +32,6 @@ class Logger:
             Logger._logger.addHandler(file_handler)
 
             error_file_handler = logging.FileHandler(Logger._error_file)
-            error_file_handler.setLevel(logging.DEBUG)
-            Logger._logger.addFilter(error_file_handler)
+            error_file_handler.setLevel(logging.ERROR)
+            Logger._logger.addHandler(error_file_handler)
         return Logger._logger
