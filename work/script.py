@@ -1,7 +1,7 @@
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))
+sys.path.append(os.path.join(os.path.dirname(__file__), os.pardir))     # For tool package
 
 from builtins import ValueError
 import argparse
@@ -25,16 +25,12 @@ def parse_args():
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     check_parser = subparsers.add_parser(Command.CHECK, help='Run 2 file and check their outputs to match')
-    check_parser.add_argument('main',
+    check_parser.add_argument('files',
                               type=str,
-                              default=Constant.DEFAULT_MAIN_FILE,
+                              default=[Constant.DEFAULT_MAIN_FILE, Constant.DEFAULT_BRUTE_FILE],
                               nargs='*',
-                              help=f'The main file to check (default: {Constant.DEFAULT_MAIN_FILE})')
-    check_parser.add_argument('brute',
-                                type=str,
-                                default=Constant.DEFAULT_BRUTE_FILE,
-                                nargs='*',
-                                help=f'The brute force file to check (default: {Constant.DEFAULT_BRUTE_FILE})')
+                              help=f'Running all files with the same input and compare the output." \
+                                "Default: [{Constant.DEFAULT_MAIN_FILE}, {Constant.DEFAULT_BRUTE_FILE}]')
 
     run_parser = subparsers.add_parser(Command.RUN, help='Run a c++ program.')
     run_parser.add_argument("file", nargs="?", default="main.cpp", type=str, help="The main C++ file to run.")
@@ -67,7 +63,8 @@ def main():
     args = parse_args()
 
     if args.command == Command.CHECK:
-        Checker().run(args.main, args.brute)
+        assert len(args.files) >= 2, "Use at least 2 files"
+        Checker().run(*args.files)
     elif args.command == Command.RUN:
         runner = Runner(args.file, debug=args.debug, file_io=(not args.no_fileio))
         runner.run()

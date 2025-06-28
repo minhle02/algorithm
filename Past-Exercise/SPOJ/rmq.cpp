@@ -11,14 +11,14 @@ using vii = vector<vector<int>>;
 /**********************/
 
 int main() {
-#ifdef LOCALONLY
+#ifdef __FILEIO__
     freopen("input.txt", "r", stdin);
     freopen("output.txt", "w", stdout);
 #endif
     int TC;
     scanf("%d", &TC);
     while (TC--) { 
-#ifdef LOCALONLY
+#ifdef __FILEIO__
     static int _tc_num = 1;
     cout << "Testcase " << _tc_num << ":\n";
     _tc_num++;

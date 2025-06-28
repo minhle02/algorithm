@@ -73,7 +73,7 @@ class CppCompileFlagsConfig():
         self.__set_flag(debug_command)
     
     def set_fileio_flag(self):
-        fileio_command = "-DLOCALONLY"
+        fileio_command = "-D__FILEIO__"
         self.__set_flag(fileio_command)
     
     def get_flag(self) -> list[str]:
@@ -87,7 +87,6 @@ class CppCompileHandler(CompileBaseHandler):
         self._logger = Logger.get_logger()
         self._exec_handler = ExecCmdHandler()
 
-    
     def get_compiler(self) -> str:
         return "g++"
     
@@ -146,13 +145,14 @@ class Compile:
     def __init__(self):
         pass
 
-    def __get_handler(self, file_type : CodeFileType) -> type[CompileBaseHandler]:
+    def __get_handler(self, code_file : CodeFile) -> type[CompileBaseHandler]:
+        file_type = code_file.file_type
         if file_type == CodeFileType.CPP:
             return CppCompileHandler
         elif file_type == CodeFileType.PYTHON:
             return PythonCompileHandler
         else:
-            raise ValueError(f"Unknown file type: {file_type}")
+            raise ValueError(f"Not supported file {code_file.file_name}")
     
     def set_debug(self) :
         CppCompileFlagsConfig.instance().set_debug_flag()
@@ -161,7 +161,7 @@ class Compile:
         CppCompileFlagsConfig.instance().set_fileio_flag()
     
     def sync_compile(self, file : CodeFile) -> bool:
-        return self.__get_handler(file.file_type)(file).sync_compile()
+        return self.__get_handler(file)(file).sync_compile()
     
     async def async_compile(self, file : CodeFile) -> bool:
-        return await self.__get_handler(file.file_type)(file).async_compile()
+        return await self.__get_handler(file)(file).async_compile()

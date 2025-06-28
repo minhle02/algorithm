@@ -81,6 +81,7 @@ class CheckerBase:
     async def check(self, *files : CodeFile):
         self._logger.info(f"Checking...")
         self._logger.info("")
+        success = True
         for i in range(self.run_count):
             self._logger.debug("")
             self._logger.debug("="*20)
@@ -91,6 +92,7 @@ class CheckerBase:
             for result in results:
                 code_file = result.code_file
                 if not result.success:
+                    success = False
                     self._logger.error(f"Fail to run file {code_file.file_name}")
                     break
                 if isinstance(result.stdout, str):
@@ -98,18 +100,18 @@ class CheckerBase:
             else:
                 clean_output = self.__clean_output(output)
                 if not self.check_output(clean_output):
+                    success = False
                     self.__print_error_output(clean_output, data, *files)
-                else:
-                    self._logger.info(f"Success")
-            
+        if success:
+            self._logger.info("Success")
 
-    def run(self, file1 : str, file2 : str) -> None:
-        files = [CodeFile(file1), CodeFile(file2)]
-        if not asyncio.run(self.compile_file(*files)):
+    def run(self, *files : str) -> None:
+        code_files = [CodeFile(file) for file in files]
+        if not asyncio.run(self.compile_file(*code_files)):
             self._logger.error(f"Fail to compile file. please check")
             return 
     
-        asyncio.run(self.check(*files))
-        for file in files:
-            if file.executable_name:
-                os.remove(file.executable_name)
+        asyncio.run(self.check(*code_files))
+        for code_file in code_files:
+            if code_file.executable_name:
+                os.remove(code_file.executable_name)

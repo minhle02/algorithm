@@ -2,5 +2,5 @@ CompileFlags:
   Add:
     - "-std=c++17"
     - "-I$base_dir/include/"
-    - "-DLOCALONLY"
+    - "-D__FILEIO__"
     - "-D__DEBUG__"

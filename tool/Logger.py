@@ -29,6 +29,7 @@ class Logger:
 
             file_handler = logging.FileHandler(Logger._default_file)
             file_handler.setLevel(logging.DEBUG)
+            file_handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
             Logger._logger.addHandler(file_handler)
 
             error_file_handler = logging.FileHandler(Logger._error_file)

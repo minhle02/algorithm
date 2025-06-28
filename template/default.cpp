@@ -23,7 +23,7 @@ using vii = vector<vector<long long>>;
 
 int32_t main() {
     DEBUG_COUT << "Debug mode is ON" << endl;
-#ifdef LOCALONLY
+#ifdef __FILEIO__
     freopen("$input", "r", stdin);
     freopen("$output", "w", stdout);
 #endif

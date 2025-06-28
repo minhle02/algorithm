@@ -21,6 +21,11 @@ log/
 # vscode
 .vscode/
 
-# working file
-work/*.cpp
-work/*.txt
+###### working file ##############
+# ignore all file in work folder
+work/*
+
+# except script.py and generator.py
+work/\!script.py
+work/\!generator.py
+##################################

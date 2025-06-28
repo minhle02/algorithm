@@ -19,10 +19,6 @@ class Runner:
         
         if file_io:
             self._compile_handler.set_fileio()
-    
-    def __get_additional_include_path(self)  -> str:
-        path = os.path.join(os.path.dirname(__file__), os.pardir, "include")
-        return os.path.abspath(path)
 
     def run(self, input_data: Optional[str] = None):
         if self._compile_handler.sync_compile(self._file):
