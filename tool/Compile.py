@@ -49,6 +49,9 @@ class CompileBaseHandler(ABC):
                 self._logger.info(f"Compile file {self.code_file.file_name} success")
 
 class CppCompileFlagsConfig():
+    """
+    Handle global Cpp compile flags
+    """
     _initialized = False
     _instance : Optional['CppCompileFlagsConfig'] = None
 
@@ -80,6 +83,9 @@ class CppCompileFlagsConfig():
         return self._compile_flags
 
 class CppCompileHandler(CompileBaseHandler):
+    """
+    Compile .cpp file
+    """
     _lock : asyncio.Lock = asyncio.Lock()
     def __init__(self, code_file : CodeFile):
         assert code_file.file_type == CodeFileType.CPP
@@ -126,6 +132,11 @@ class CppCompileHandler(CompileBaseHandler):
         return result.is_success()
 
 class PythonCompileHandler(CompileBaseHandler):
+    """
+    Handle Python compilation. 
+    
+    Python does not need any compilation, so this class do nothing
+    """
     def __init__(self, code_file : CodeFile):
         assert code_file.file_type == CodeFileType.PYTHON
         super().__init__(code_file)
@@ -142,6 +153,9 @@ class PythonCompileHandler(CompileBaseHandler):
         return True
 
 class Compile:
+    """
+    Compile code file
+    """
     def __init__(self):
         pass
 

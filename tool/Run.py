@@ -21,6 +21,13 @@ class RunResult:
     stderr : Optional[str]
     code_file : CodeFile
 
+    def get_clean_stdout(self) -> str:
+        if not self.stdout: 
+            return ""
+        stdout_lines = self.stdout.strip().splitlines()
+        stdout_lines = [line.strip() for line in stdout_lines if line.strip()]
+        return "\n".join(stdout_lines)
+
 class RunFileBaseHandler(ABC):
     def __init__(self, code_file : CodeFile, data : Optional[str] = None):
         assert os.path.exists(code_file.file_name), f"File not found: {code_file.file_name}"
@@ -52,7 +59,7 @@ class RunFileBaseHandler(ABC):
             self._logger.error("")
             self._logger.error(f"stdout:\n{result.stdout}")
         else:
-            self._logger.debug(f"Run file {self.code_file.file_name} success")
+            self._logger.debug(f"Run file {self.code_file.executable_name} success")
         
     async def log_async_result(self, result : ExecResult, lock : asyncio.Lock) -> None:
         async with lock:
@@ -63,10 +70,13 @@ class RunFileBaseHandler(ABC):
                 self._logger.error("")
                 self._logger.error(f"stdout:\n{result.stdout}")
             else:
-                self._logger.debug(f"Run file {self.code_file.file_name} success")
+                self._logger.debug(f"Run file {self.code_file.executable_name} success")
 
 
 class CppRunHandler(RunFileBaseHandler):
+    """
+    Run cpp file
+    """
     _lock : asyncio.Lock = asyncio.Lock()
     def __init__(self, code_file : CodeFile, data : Optional[str]):
         assert code_file.file_type == CodeFileType.CPP
@@ -92,6 +102,9 @@ class CppRunHandler(RunFileBaseHandler):
     
 
 class PythonRunHandler(RunFileBaseHandler):
+    """
+    Run python file
+    """
     _lock : asyncio.Lock = asyncio.Lock()
     def __init__(self, code_file : CodeFile, data : Optional[str]):
         assert code_file.file_type == CodeFileType.PYTHON
@@ -101,20 +114,22 @@ class PythonRunHandler(RunFileBaseHandler):
     
     @override
     async def async_run(self) -> RunResult:
-        cmds = ["uv", "run", self.code_file.file_name]
+        cmds = ["uv", "run", self.code_file.executable_name]
         result = await self._exec_cmd_handler.async_exec(cmds, self._data)
         await self.log_async_result(result, PythonRunHandler._lock)
         return RunResult(result.is_success(), result.stdout, result.stderr, self.code_file)
     
     @override
     def sync_run(self) -> RunResult:
-        cmds = ["uv", "run", self.code_file.file_name]
+        cmds = ["uv", "run", self.code_file.executable_name]
         result = self._exec_cmd_handler.sync_exec(cmds, self._data)
         self.log_sync_result(result)
         return RunResult(result.is_success(), result.stdout, result.stderr, self.code_file)
 
-
 class Run:
+    """
+    Run a code file
+    """
     def __init__(self):
         pass
 

@@ -24,6 +24,9 @@ class ExecResult:
         return True
 
 class ExecCmdHandler:
+    """
+    Run a shell command in sync/async mode
+    """
     def __init__(self):
         pass
 

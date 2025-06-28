@@ -25,19 +25,6 @@ class CheckerBase:
     def run_count(self) -> int:
         return 20
 
-
-    def check_output(self, output1 : str, output2 : str) -> bool:
-        lines1 = output1.strip().splitlines()
-        lines2 = output2.strip().splitlines()
-        if len(lines1) != len(lines2):
-            self._logger.debug(f"Output length mismatch: {len(lines1)} != {len(lines2)}")
-            return False
-        for line1, line2 in zip(lines1, lines2):
-            if line1.split() != line2.split():
-                self._logger.debug(f"Output mismatch:\n{line1}\nvs\n{line2}")
-                return False
-        return True
-
     async def compile_file(self, *files : CodeFile) -> bool:
         tasks : list[asyncio.Task] = []
         async with asyncio.TaskGroup() as tg:
@@ -57,13 +44,6 @@ class CheckerBase:
                 task = tg.create_task(self._run_handler.async_run(file, data))
                 tasks.append(task)
         return [task.result() for task in tasks]
-    
-    def __clean_output(self, output : list[str]) -> list[str]:
-        res : list[str] = []
-        for o in output:
-            lines = [line for line in o.splitlines() if line]
-            res.append("\n".join(lines))
-        return res
 
     def check_output(self, output : list[str]):
         return all(el == output[0] for el in output) if len(output) > 0 else True
@@ -77,6 +57,10 @@ class CheckerBase:
         outputs = [list(row) for row in zip(*outputs)]
         self._logger.debug(f"Result: \n {tabulate(tabular_data=outputs, headers=headers)}")
         self._logger.debug("")
+    
+    def __print_success_output(self, output : list[str], data : str, *files : CodeFile):
+        self._logger.debug(f"Check success")
+        self._logger.debug(f"Data:\n{data}")
 
     async def check(self, *files : CodeFile):
         self._logger.info(f"Checking...")
@@ -94,14 +78,15 @@ class CheckerBase:
                 if not result.success:
                     success = False
                     self._logger.error(f"Fail to run file {code_file.file_name}")
+                    self._logger.error(f"Data:\n{data}")
                     break
-                if isinstance(result.stdout, str):
-                    output.append(result.stdout)
+                output.append(result.get_clean_stdout())
             else:
-                clean_output = self.__clean_output(output)
-                if not self.check_output(clean_output):
+                if not self.check_output(output):
                     success = False
-                    self.__print_error_output(clean_output, data, *files)
+                    self.__print_error_output(output, data, *files)
+                else:
+                    self.__print_success_output(output, data, *files)
         if success:
             self._logger.info("Success")
 
@@ -114,4 +99,4 @@ class CheckerBase:
         asyncio.run(self.check(*code_files))
         for code_file in code_files:
             if code_file.executable_name:
-                os.remove(code_file.executable_name)
+                code_file.remove()

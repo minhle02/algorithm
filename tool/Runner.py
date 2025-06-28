@@ -9,6 +9,11 @@ from .DataModel import CodeFile
 from .Run import Run
 
 class Runner:
+    """
+    Handler class to compile and run a code file. Use sync compile and sync run
+    
+    Support setting debug and file_io flags
+    """
     def __init__(self, main_file: str, debug: bool = True, file_io: bool = True):
         self._compile_handler = Compile()
         self._run_handler = Run()
@@ -23,8 +28,7 @@ class Runner:
     def run(self, input_data: Optional[str] = None):
         if self._compile_handler.sync_compile(self._file):
             data = self._run_handler.sync_run(self._file)
-            if self._file.executable_name:
-                os.remove(self._file.executable_name)
+            self._file.remove()
             if data:
                 self._logger.info(f"Output of running file {self._file.file_name}:")
                 self._logger.info(data.stdout)

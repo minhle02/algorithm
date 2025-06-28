@@ -20,7 +20,15 @@ class CodeFile:
             self.executable_name = os.path.basename(self.file_name).removesuffix(".cpp") + ".exe"
         elif self.file_name.endswith(".py"):
             self.file_type = CodeFileType.PYTHON
-            self.executable_name = ""
+            self.executable_name = self.file_name
         else:
             self.file_type = CodeFileType.UNKNOWN
             self.executable_name = ""
+    
+    def remove(self):
+        """
+        Remove executable file (only .exe)
+        """
+        if self.file_type == CodeFileType.CPP:
+            if self.executable_name and os.path.exists(self.executable_name):
+                os.remove(self.executable_name)

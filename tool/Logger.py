@@ -4,6 +4,9 @@ import os
 from typing import Optional
 
 class Logger:
+    """
+    Manage Logger instance
+    """
     _logger : Optional[logging.Logger] = None
     _default_file = os.path.join(os.path.dirname(__file__), "log", "output.log")
     _error_file =  os.path.join(os.path.dirname(__file__), "log", "error.log")

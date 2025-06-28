@@ -12,6 +12,9 @@ class Constant:
     WORK_DIR = BASE_DIR / "work"
 
 class SetupProj:
+    """
+    Setup project: environment, tool (clangd)
+    """
     input_file_name : str =   "input.txt"
     files_to_create : list[str] = ["main.cpp", "brute.cpp"]
 
