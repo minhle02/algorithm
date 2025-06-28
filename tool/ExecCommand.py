@@ -61,11 +61,12 @@ class ExecCmdHandler:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            text=True,
         )
-
-        stdout, stderr = proc.communicate(input_data)
-        stdout = bytes(stdout).decode("utf-8")
-        stderr = bytes(stderr).decode("utf-8")
+        if not input_data:
+            stdout, stderr = proc.communicate()
+        else:
+            stdout, stderr = proc.communicate(input=input_data)
 
         return ExecResult(
             return_code = proc.returncode,
