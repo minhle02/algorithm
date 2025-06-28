@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+#define endl "\n"
 #define FOR(i, L ,R) for (long long i = L; i < R; i++)
 #define FOR0(i, N) for (long long i = 0; i < N; i++)
 
@@ -8,7 +9,7 @@ constexpr int32_t DP_LIM = 1000000007;
 #define int long long
 
 #ifdef __DEBUG__
-#define PRINT_VECTOR(v) do {cout << "Container " << #v << "\n"; for (auto&e : v) {cout << e << " ";} cout << "\n";} while (false)
+#define PRINT_VECTOR(v) do {cout << "Container " << #v << ":\n"; for (auto&e : v) {cout << e << " ";} cout << "\n";} while (false)
 #define DEBUG(...) do {printf(__VA_ARGS__);} while (false)
 #define DEBUG_COUT std::cout
 #else
