@@ -57,7 +57,7 @@ class Checker(CheckerBase):
 
     @property
     def run_count(self) -> int:
-        return 1
+        return 200
 
 def main():
     args = parse_args()
