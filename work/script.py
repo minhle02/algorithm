@@ -7,7 +7,7 @@ from builtins import ValueError
 import argparse
 import random
 from tool import *
-from generator import InputGenerator
+from generator import Generator
 
 from typing import override
 
@@ -19,6 +19,7 @@ class Command:
 class Constant:
     DEFAULT_MAIN_FILE = 'main.cpp'
     DEFAULT_BRUTE_FILE = 'brute.cpp'
+    DEFAUL_NUMBER_OF_TESTS = 20
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Command line tool for checking and running code.")
@@ -31,6 +32,11 @@ def parse_args():
                               nargs='*',
                               help=f'Running all files with the same input and compare the output." \
                                 "Default: [{Constant.DEFAULT_MAIN_FILE}, {Constant.DEFAULT_BRUTE_FILE}]')
+    check_parser.add_argument("-n",
+                            "--num-tests",
+                            dest="num_tests",
+                            default=Constant.DEFAUL_NUMBER_OF_TESTS,
+                            help=f"Number of tests to generate and test. Default : {Constant.DEFAUL_NUMBER_OF_TESTS}")
 
     run_parser = subparsers.add_parser(Command.RUN, help='Run a c++ program.')
     run_parser.add_argument("file", nargs="?", default="main.cpp", type=str, help="The main C++ file to run.")
@@ -47,24 +53,20 @@ def parse_args():
     return parser.parse_args()
 
 class Checker(CheckerBase):
-    def __init__(self):
-        super().__init__()
-        self._input_gen = InputGenerator()
-
-    @override
-    def gen_input(self):
-        return self._input_gen.gen_input()
+    def __init__(self, run_count : int):
+        super().__init__(Generator())
+        self._run_count = run_count
 
     @property
     def run_count(self) -> int:
-        return 200
+        return self._run_count
 
 def main():
     args = parse_args()
 
     if args.command == Command.CHECK:
         assert len(args.files) >= 2, "Use at least 2 files"
-        Checker().run(*args.files)
+        Checker(args.num_tests).run(*args.files)
     elif args.command == Command.RUN:
         runner = Runner(args.file, debug=args.debug, file_io=(not args.no_fileio))
         runner.run()

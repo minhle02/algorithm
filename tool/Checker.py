@@ -10,13 +10,15 @@ from .Compile import Compile
 from .Run import Run, RunResult
 from .DataModel import CodeFile
 from .ExecCommand import ExecResult
+from .InputGenerator import InputGenerator
 from tabulate import tabulate
 
 class CheckerBase:
-    def __init__(self):
+    def __init__(self, generator : InputGenerator):
         self._logger = Logger.get_logger()
         self._compile_handler = Compile()
         self._run_handler = Run()
+        self._input_gen = generator
 
     def gen_input(self) -> str:
         raise NotImplementedError("This function must be implemented")
@@ -70,7 +72,7 @@ class CheckerBase:
             self._logger.debug("")
             self._logger.debug("="*20)
             self._logger.debug(f"Attempt {i + 1}:")
-            data = self.gen_input()
+            data = self._input_gen.gen_input()
             results = await self.run_files(data, *files)
             output : list[str]= []
             for result in results:
